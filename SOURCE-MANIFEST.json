@@ -117,7 +117,7 @@
   },
   {
     "path": "scripts/prepare-github-export.mjs",
-    "sha256": "28628e75667a199fd9aecd4dc29e4da99acf5aa065190b82fecbb6cad1501f38"
+    "sha256": "354841f5422c3061068f614afcd1b1814e3e623429489b37fdddc3bba026959e"
   },
   {
     "path": "supabase/config.toml",
@@ -862,5 +862,17 @@
   {
     "path": "tlh/vite.config.ts",
     "sha256": "5127a2e559f42ffb46fd9d8c4180eedd93c4145afcc63e2a4fa09edf0d08f0ea"
+  },
+  {
+    "path": "browser-helper/extension/manifest.json",
+    "sha256": "81a55dbe02d78fda2d6b572253fc3ae42737247f720291f7a7b0ad7c6f20fcba"
+  },
+  {
+    "path": "browser-helper/extension/popup.html",
+    "sha256": "2fec0cf327c4c4c22b56d059d83c1137441e570cfbc030c8a093a4df3ac9d113"
+  },
+  {
+    "path": "browser-helper/extension/popup.js",
+    "sha256": "2bc3c355fef18c59cc718fe34bfd7d1caded13efa2b82da4b7c74d0c33d28698"
   }
 ]

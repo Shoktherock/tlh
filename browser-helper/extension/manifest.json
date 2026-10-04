@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "TLH Lot Collector — Schwab Pilot",
+  "version": "0.3.0",
+  "description": "User-triggered Schwab bulk lot collection with position loading, cancel, retry, and local export.",
+  "permissions": ["activeTab", "scripting"],
+  "action": {
+    "default_title": "TLH Lot Collector — Pilot",
+    "default_popup": "popup.html"
+  }
+}
