@@ -1,0 +1,506 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:tlh:brokerage-snapshot:1.0",
+  "title": "Brokerage snapshot 1.0",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "snapshot_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "producer": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "name",
+        "version"
+      ],
+      "additionalProperties": false
+    },
+    "broker": {
+      "type": "string",
+      "minLength": 1
+    },
+    "capture_started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "capture_completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "accounts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "account_ref": {
+            "type": "string",
+            "minLength": 1
+          },
+          "display_label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "masked_identifier": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "account_type": {
+            "enum": [
+              "taxable",
+              "traditional_ira",
+              "roth_ira",
+              "other",
+              "unknown"
+            ]
+          },
+          "positions_coverage": {
+            "enum": [
+              "complete",
+              "partial"
+            ]
+          },
+          "positions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "security": {
+                  "type": "object",
+                  "properties": {
+                    "symbol": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "broker_security_id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "exchange": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "symbol"
+                  ],
+                  "additionalProperties": false
+                },
+                "quantity": {
+                  "type": "string",
+                  "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+                },
+                "total_basis": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "currency": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[A-Z]{3}$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "observed_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "effective_at": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "effective_date": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "source_ref": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "security",
+                "quantity",
+                "total_basis",
+                "currency",
+                "observed_at",
+                "effective_at",
+                "effective_date",
+                "source_ref"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "lot_scopes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "security": {
+                  "type": "object",
+                  "properties": {
+                    "symbol": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "broker_security_id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "exchange": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "symbol"
+                  ],
+                  "additionalProperties": false
+                },
+                "status": {
+                  "enum": [
+                    "complete",
+                    "partial",
+                    "failed",
+                    "skipped"
+                  ]
+                },
+                "observed_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "effective_at": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "effective_date": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "source_ref": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "completeness_evidence": {
+                  "type": "object",
+                  "properties": {
+                    "traversal": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "displayed_row_count": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "pages_visited": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "zero_position_confirmed": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "traversal"
+                  ],
+                  "additionalProperties": false
+                },
+                "reported_totals": {
+                  "type": "object",
+                  "properties": {
+                    "quantity": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "total_basis": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "quantity",
+                    "total_basis"
+                  ],
+                  "additionalProperties": false
+                },
+                "lots": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "row_ref": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "broker_lot_id": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "acquisition_date": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "format": "date"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "quantity": {
+                        "type": "string",
+                        "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+                      },
+                      "total_basis": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "cost_per_share": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "broker_holding_period": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "currency": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "pattern": "^[A-Z]{3}$"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "raw_acquisition_date": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "row_ref",
+                      "broker_lot_id",
+                      "acquisition_date",
+                      "quantity",
+                      "total_basis",
+                      "cost_per_share",
+                      "broker_holding_period",
+                      "currency"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "issues": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "severity": {
+                        "enum": [
+                          "info",
+                          "warning",
+                          "error"
+                        ]
+                      },
+                      "message": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "source_ref": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "code",
+                      "severity",
+                      "message",
+                      "source_ref"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "security",
+                "status",
+                "observed_at",
+                "effective_at",
+                "effective_date",
+                "source_ref",
+                "completeness_evidence",
+                "reported_totals",
+                "lots",
+                "issues"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "severity": {
+                  "enum": [
+                    "info",
+                    "warning",
+                    "error"
+                  ]
+                },
+                "message": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "source_ref": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "code",
+                "severity",
+                "message",
+                "source_ref"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "account_ref",
+          "display_label",
+          "masked_identifier",
+          "account_type",
+          "positions_coverage",
+          "positions",
+          "lot_scopes",
+          "issues"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1
+    }
+  },
+  "required": [
+    "schema_version",
+    "snapshot_id",
+    "producer",
+    "broker",
+    "capture_started_at",
+    "capture_completed_at",
+    "accounts"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TLH browser helper — Phase 1 pilot</title>
+  <link rel="stylesheet" href="/demo/style.css">
+  <script src="/dist/demo.js" defer></script>
+</head>
+<body>
+  <main>
+    <header><span class="eyebrow">TLH / BROWSER HELPER</span><span class="phase">PHASE 1 · LOCAL PILOT</span></header>
+    <h1>Let the helper<br>open the lots.</h1>
+    <p class="intro">A working collection rehearsal with synthetic holdings. Start the helper and watch it open each security, turn the pages, and build an export.</p>
+    <section class="controls" aria-label="Pilot scenarios">
+      <label for="scenario">Test scenario</label>
+      <select id="scenario">
+        <option value="normal">All holdings collected</option>
+        <option value="failure">VTI fails to load</option>
+        <option value="unknown">VTI has missing basis and date</option>
+        <option value="mismatch">VTI lot quantity does not match</option>
+        <option value="partial">Positions list is filtered</option>
+        <option value="pagination">VTI pagination stalls</option>
+      </select>
+      <button id="expire">Expire session</button><button id="restore">Restore session</button>
+      <button id="switch">Switch account</button>
+    </section>
+    <section data-tlh-demo="positions-v1" data-account="demo-account-1" data-session="active" data-coverage="complete">
+      <div class="section-title"><h2>Positions</h2><span>Synthetic account ···123</span></div>
+      <table><thead><tr><th>Security</th><th>Shares</th><th>Cost basis</th><th>Actions</th></tr></thead><tbody id="positions"></tbody></table>
+    </section>
+    <section class="explanation"><h2>What to look for</h2><ol>
+      <li>Select positions in the helper and click <strong>Collect lots</strong> once.</li>
+      <li>The helper opens each menu and lot panel, including both pages of VTI.</li>
+      <li>Review coverage and download the JSON snapshot.</li>
+    </ol><p>For a retry test, choose “VTI fails to load,” collect, change back to “All holdings collected,” then retry. Successful scopes are retained.</p>
+    <p class="note">This page is a test fixture, not Schwab. Live brokerage collection is the next phase. Refreshing clears the helper's in-memory results.</p></section>
+    <section><h2>Navigation activity</h2><ol id="activity" aria-live="polite"></ol></section>
+  </main>
+  <section data-lot-panel hidden role="dialog" aria-label="Lot details" aria-modal="false">
+    <div class="section-title"><h2 id="lot-title">Lot details</h2><button data-close>Close lot details</button></div>
+    <p id="page-info"></p>
+    <table><thead><tr><th>Acquired</th><th>Shares</th><th>Cost/share</th><th>Basis</th><th>Term</th></tr></thead><tbody id="lot-rows"></tbody></table>
+    <div data-totals></div><button data-next>Next lot page</button>
+  </section>
+</body>
+</html>

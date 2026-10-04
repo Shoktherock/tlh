@@ -1,0 +1,50 @@
+{
+  "name": "tlh2",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate": "node browser-helper/scripts/generate.mjs",
+    "preverify:schwab": "npm run generate",
+    "verify:schwab": "node browser-helper/scripts/verify-schwab.mjs",
+    "pretest": "npm run generate",
+    "build": "node browser-helper/scripts/build.mjs",
+    "start": "node browser-helper/scripts/serve.mjs",
+    "test": "node --test browser-helper/tests/*.test.mjs",
+    "test:browser": "playwright test --config browser-helper/playwright.config.mjs",
+    "check": "npm run test && npm run build && npm run test:browser",
+    "pretest:tlh": "npm run generate",
+    "test:tlh": "node --test --test-concurrency=1 tlh/tests/*.test.mjs",
+    "build:tlh": "npm run generate && tsc -p tlh/tsconfig.json && vite build --config tlh/vite.config.ts",
+    "start:tlh": "vite preview --config tlh/vite.config.ts",
+    "test:tlh:browser": "playwright test --config tlh/playwright.config.mjs",
+    "test:accounts:browser": "playwright test --config tlh/playwright.auth.config.mjs",
+    "test:accounts:local": "playwright test --config tlh/playwright.local.config.mjs",
+    "build:imports": "npm run generate && node tlh/scripts/build-import-service.mjs",
+    "presupabase:start": "npm run build:imports",
+    "serve:imports": "npm run build:imports && supabase functions serve --network-id tlh2-local",
+    "supabase:start": "supabase start --network-id tlh2-local -x realtime,imgproxy,logflare,vector,supavisor && node tlh/scripts/bind-local-supabase.mjs",
+    "supabase:stop": "supabase stop",
+    "supabase:configure": "node tlh/scripts/configure-local-supabase.mjs --write",
+    "check:tlh": "npm run test:tlh && npm run build:tlh && npm run test:tlh:browser",
+    "alerts:worker": "node tlh/scripts/run-alert-worker.mjs"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@playwright/test": "^1.63.0",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "esbuild": "^0.28.2"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/material": "^9.4.0",
+    "@supabase/supabase-js": "^2.116.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "typescript": "^7.0.2",
+    "vite": "^6.4.3"
+  }
+}

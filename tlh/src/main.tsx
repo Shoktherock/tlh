@@ -1,0 +1,10 @@
+import React, { lazy, Suspense } from 'react';
+import { createRoot } from 'react-dom/client';
+import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
+import ImportApp from './ImportApp';
+import './style.css';
+const Launch = lazy(() => import('./launch/Launch'));
+const AccountsApp = lazy(() => import('./accounts/AccountsApp'));
+const theme = createTheme({ palette: { primary: { main: '#202520' }, background: { default: '#fafbf9' } }, typography: { fontFamily: 'Inter, Segoe UI, system-ui, sans-serif', button: { textTransform: 'none', fontWeight: 650 } }, shape: { borderRadius: 9 } });
+const workspace = new URLSearchParams(location.search).get('workspace');
+createRoot(document.getElementById('root')!).render(<ThemeProvider theme={theme}><CssBaseline />{workspace === 'accounts' || workspace === 'imports' ? <Suspense fallback={<p role="status">Loading accounts…</p>}><AccountsApp imports={workspace === 'imports'} /></Suspense> : workspace==='pilot' ? <ImportApp /> : <Suspense fallback={<p>Loading…</p>}><Launch/></Suspense>}</ThemeProvider>);
