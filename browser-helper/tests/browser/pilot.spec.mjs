@@ -41,12 +41,12 @@ test('failed security can be retried without recollecting successful securities'
 
 // Observe the precise transition in-page so CI polling cannot miss a brief state.
 async function interruptAtVti(page, action) {
-  await page.evaluate(action => {
-    const status = document.querySelector('#tlh-helper #status');
+  await helper(page).locator('#status').evaluate((status, action) => {
     const observer = new MutationObserver(() => {
       if (!status.textContent.includes('Opening VTI')) return;
       observer.disconnect();
-      const buttons = [...document.querySelectorAll(action === 'Cancel' ? '#tlh-helper button' : 'button')];
+      const root = action === 'Cancel' ? status.getRootNode() : document;
+      const buttons = [...root.querySelectorAll('button')];
       buttons.find(b => b.textContent.trim() === action).click();
     });
     observer.observe(status, {childList:true,subtree:true,characterData:true});
