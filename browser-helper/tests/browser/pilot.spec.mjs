@@ -39,11 +39,24 @@ test('failed security can be retried without recollecting successful securities'
   expect(await page.locator('#activity li').filter({ hasText: 'MSFT: Lot Details clicked' }).count()).toBe(1);
 });
 
+// Observe the precise transition in-page so CI polling cannot miss a brief state.
+async function interruptAtVti(page, action) {
+  await page.evaluate(action => {
+    const status = document.querySelector('#tlh-helper #status');
+    const observer = new MutationObserver(() => {
+      if (!status.textContent.includes('Opening VTI')) return;
+      observer.disconnect();
+      const buttons = [...document.querySelectorAll(action === 'Cancel' ? '#tlh-helper button' : 'button')];
+      buttons.find(b => b.textContent.trim() === action).click();
+    });
+    observer.observe(status, {childList:true,subtree:true,characterData:true});
+  }, action);
+}
+
 test('cancel retains finished scopes and permits partial export', async ({ page }) => {
   await page.goto('/demo/');
+  await interruptAtVti(page, 'Cancel');
   await helper(page).getByRole('button', { name: 'Collect lots', exact: true }).click();
-  await expect(helper(page).locator('#status')).toContainText('Opening VTI');
-  await helper(page).getByRole('button', { name: 'Cancel', exact: true }).click();
   await expect(helper(page).getByRole('button', { name: 'Download snapshot JSON' })).toBeEnabled();
   const result = await snapshot(page);
   expect(result.accounts[0].lot_scopes[0].status).toBe('complete');
@@ -80,9 +93,8 @@ test('stalled pagination is partial with captured rows, followed by next securit
 
 test('account switch stops collection without retaining uncertain in-flight lots', async ({ page }) => {
   await page.goto('/demo/');
+  await interruptAtVti(page, 'Switch account');
   await helper(page).getByRole('button', { name: 'Collect lots', exact: true }).click();
-  await expect(helper(page).locator('#status')).toContainText('Opening VTI');
-  await page.getByRole('button', { name: 'Switch account' }).click();
   await expect(helper(page).getByRole('button', { name: 'Download snapshot JSON' })).toBeEnabled();
   const result = await snapshot(page); expect(result.accounts[0].account_ref).toBe('demo-account-1');
   expect(result.accounts[0].lot_scopes[1].lots.length).toBe(0);
