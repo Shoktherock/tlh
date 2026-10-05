@@ -1,8 +1,8 @@
-import {readJsonLimited,enforceRequestQuota,errorReply} from '../_common/request.mjs';
+import {readJsonLimited,enforceRequestQuota,errorReply,finishRequest} from '../_common/request.mjs';
 import {createClient} from 'npm:@supabase/supabase-js@2.116.0';
 import {analysisInputService} from '../_shared/analysis-input-service.mjs';
 
-Deno.serve(async(req:Request)=>{
+async function handle(req:Request){
   const headers={'Access-Control-Allow-Origin':Deno.env.get('APP_ORIGIN') || 'http://127.0.0.1:4180','Access-Control-Allow-Headers':'authorization, x-client-info, apikey, content-type','Access-Control-Allow-Methods':'POST, OPTIONS','Content-Type':'application/json','Cache-Control':'no-store'};
   const reply=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers});
   if(req.method==='OPTIONS')return new Response('ok',{headers});
@@ -22,4 +22,5 @@ Deno.serve(async(req:Request)=>{
     const failure=errorReply(error);
     return new Response(JSON.stringify({error:failure.message}),{status:failure.status,headers:{...headers,...(failure.status===429?{'Retry-After':'60'}:{})}});
   }
-});
+}
+Deno.serve(async(req:Request)=>finishRequest(req,await handle(req)));
