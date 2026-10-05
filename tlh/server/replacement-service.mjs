@@ -1,3 +1,4 @@
+import {ReviewError} from '../src/review-error.mjs';
 import {realizedService} from './realized-service.mjs';
 import {transactionReconciliation} from '../src/analysis/transaction-reconciliation.mjs';
 import {alertService} from './alert-service.mjs';
@@ -13,8 +14,8 @@ import {subtract} from '../src/valuation/engine.mjs';
 import {reconciliationIssues} from '../src/import/reconciliation.mjs';
 import {draftLots} from '../src/analysis/draft-lots.mjs';
 const uuid=v=>typeof v==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
-const check=(v,m)=>{if(!v)throw Error(m);};
-const value=async p=>{const r=await p;if(r.error)throw Error(/stale/i.test(r.error.message)?'Strategy changed. Reload and review again.':'Replacement evidence could not be read or saved. Reload and retry.');return r.data;};
+const check=(v,m)=>{if(!v)throw new ReviewError(m);};
+const value=async p=>{const r=await p;if(r.error)throw new ReviewError(/stale/i.test(r.error.message)?'Strategy changed. Reload and review again.':'Replacement evidence could not be read or saved. Reload and retry.');return r.data;};
 export async function replacementService(db,user,body,options={}){
   check(uuid(user),'Sign in to continue.');
   if(['planning-export','planning-preview','planning-restore'].includes(body?.action))return planningRecovery(db,user,body);
@@ -65,7 +66,7 @@ export async function replacementService(db,user,body,options={}){
   if(['preview','accept'].includes(body?.action)){
     check(typeof body.text==='string'&&new TextEncoder().encode(body.text).length<=2097152,'Choose a universe JSON file up to 2 MB.');
     check(typeof body.name==='string'&&body.name.length>0&&body.name.length<=240,'Provide a file name.');
-    let raw;try{raw=JSON.parse(body.text);}catch{throw Error('Universe file is not valid JSON.');}
+    let raw;try{raw=JSON.parse(body.text);}catch{throw new ReviewError('Universe file is not valid JSON.');}
     if(raw.originalCsv)check(typeof raw.originalCsv.text==='string'&&await hashText(raw.originalCsv.text)===raw.originalCsv.hash,'Embedded source CSV checksum does not match.');
     const document=validateUniverse(raw),hash=await hashText(body.text);
     if(body.action==='preview')return {preview:{hash,document}};
@@ -108,5 +109,5 @@ export async function replacementService(db,user,body,options={}){
     }
     return {...scoreReplacements(report,{...args,metrics}),...metadata,metricsAsOf:daily.price_date};
   }
-  throw Error('Unknown replacement action.');
+  throw new ReviewError('Unknown replacement action.');
 }

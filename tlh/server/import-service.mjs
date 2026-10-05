@@ -1,11 +1,12 @@
+import {ReviewError} from '../src/review-error.mjs';
 import { readSource, decodeSourceBytes, hash } from '../src/import/sources.mjs';
 import { previewImport, acceptPreview } from '../src/import/engine.mjs';
 import { validateBackup, restorePlan, canonical } from '../src/import/recovery.mjs';
 import {previewCorrection} from '../src/import/corrections.mjs';
 
 const uuid=value=>typeof value==='string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
-function requireValue(test,message){if(!test)throw new Error(message);}
-async function value(request){const {data,error}=await request;if(error)throw new Error(error.message.includes('stale') ? 'This preview is stale. Refresh it before accepting.' : 'Database operation failed. Refresh the preview and try again.');return data;}
+function requireValue(test,message){if(!test)throw new ReviewError(message);}
+async function value(request){const {data,error}=await request;if(error)throw new ReviewError(error.code==='P0001' && ['Stored upload limit reached. Remove unused staged uploads or contact support.','Daily upload limit reached. Retry tomorrow.'].includes(error.message) ? error.message : error.message.includes('stale') ? 'This preview is stale. Refresh it before accepting.' : 'Database operation failed. Refresh the preview and try again.');return data;}
 const snapshot=async(db,user)=>{
   const state=await value(db.rpc('read_import_state',{p_user:user}));
   state.imports.sort((a,b)=>a.baseRevision-b.baseRevision);
@@ -110,7 +111,7 @@ export async function importService(db,user,body){
       requireValue(uuid(body.sourceId),'Choose a backup file.');
       const record=await value(db.from('import_sources').select('*').eq('user_id',user).eq('id',body.sourceId).eq('status','staged').maybeSingle());
       requireValue(record,'Backup upload is unavailable.');
-      let backup;try{backup=JSON.parse(await uploadedText(db,record));}catch(error){throw new Error(`Backup could not be read: ${error.message}`);}
+      let backup;try{backup=JSON.parse(await uploadedText(db,record));}catch(error){throw new ReviewError('Backup could not be read. Check the file and try again.');}
       const verified=await validateBackup(backup);
       const fingerprint=await hash(canonical([verified.fingerprint,body.mapping]));
       const receipt=await value(db.from('restore_receipts').select('result').eq('user_id',user).eq('fingerprint',fingerprint).maybeSingle());
@@ -132,6 +133,6 @@ export async function importService(db,user,body){
       }
       return {discarded:records.length};
     }
-    default: throw new Error('Unsupported import request.');
+    default: throw new ReviewError('Unsupported import request.');
   }
 }

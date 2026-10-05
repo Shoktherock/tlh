@@ -1,8 +1,10 @@
+import {ReviewError} from '../src/review-error.mjs';
+import {databaseError} from './database-error.mjs';
 import {parseRealized} from '../src/realized/engine.mjs';
 import {canonical} from '../src/analysis/planning-backup.mjs';
 import {hashText} from '../src/activity/engine.mjs';
-const value=async p=>{const r=await p;if(r.error)throw Error(r.error.message);return r.data;};
-const check=(v,m)=>{if(!v)throw Error(m);};
+const value=async p=>{const r=await p;if(r.error)throw databaseError(r.error);return r.data;};
+const check=(v,m)=>{if(!v)throw new ReviewError(m);};
 export async function realizedRecovery(db,user,body){
  const accounts=await value(db.from('accounts').select('id,label,account_type').eq('user_id',user));
  if(body.action==='realized-backup'){

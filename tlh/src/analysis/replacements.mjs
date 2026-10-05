@@ -1,9 +1,10 @@
+import {ReviewError} from '../review-error.mjs';
 import {validDate} from './inputs.mjs';
 import {shiftDate} from './candidates.mjs';
 import {correctionView} from '../import/corrections.mjs';
 import {activityView,activityCoverage} from '../activity/engine.mjs';
 import {sameReplacementIssuer} from './replacement-identity.mjs';
-const check=(ok,message)=>{if(!ok)throw Error(message);};
+const check=(ok,message)=>{if(!ok)throw new ReviewError(message);};
 const text=(v,max=200)=>typeof v==='string'&&v.trim().length>0&&v.length<=max;
 export function validateUniverse(raw){
   check(raw?.format==='tlh-replacement-universe'&&raw.version===1,'Unsupported universe format/version.');

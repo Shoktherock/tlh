@@ -1,6 +1,7 @@
+import {databaseError} from './database-error.mjs';
 import {parseIwv,IWV_URL} from './iwv-source.mjs';
 import {hashText} from '../src/activity/engine.mjs';
-const value=async p=>{const r=await p;if(r.error)throw Error(r.error.message);return r.data;};
+const value=async p=>{const r=await p;if(r.error)throw databaseError(r.error);return r.data;};
 export function validateIwvUpdate(next,old,today){
  if(next.asOf>today||next.validThrough<today)throw Error('Publisher holdings are future-dated or older than seven days. Previous benchmark retained.');
  if(next.members.length<2000||next.members.length>3500||next.members.some(m=>!m.sector))throw Error('Unusual constituent count or missing sectors; review required.');
@@ -25,7 +26,7 @@ export async function refreshIwv(db,{fetchImpl=fetch,now=new Date()}={}){
   if(error)throw Error(error);const old=universes.find(u=>u.id===s.universe_id).document;validateIwvUpdate(next,old,now.toISOString().slice(0,10));
   if(next.asOf!==old.asOf){const text=JSON.stringify(next);if(new TextEncoder().encode(text).length>2097152)throw Error('Universe exceeds evidence storage limit.');const hash=await hashText(text);
    let u=await value(db.from('replacement_universes').select('id').eq('user_id',s.user_id).eq('hash',hash).maybeSingle());
-   if(!u){const insert=await db.from('replacement_universes').insert({user_id:s.user_id,hash,name:next.name,benchmark:next.benchmark,provenance:next.provenance,as_of:next.asOf,valid_through:next.validThrough,member_count:next.members.length,source_name:'automatic-iwv-holdings.json',source_text:text,document:next}).select('id').single();if(insert.error?.code==='23505')u=await value(db.from('replacement_universes').select('id').eq('user_id',s.user_id).eq('hash',hash).single());else if(insert.error)throw Error(insert.error.message);else u=insert.data;}
+   if(!u){const insert=await db.from('replacement_universes').insert({user_id:s.user_id,hash,name:next.name,benchmark:next.benchmark,provenance:next.provenance,as_of:next.asOf,valid_through:next.validThrough,member_count:next.members.length,source_name:'automatic-iwv-holdings.json',source_text:text,document:next}).select('id').single();if(insert.error?.code==='23505')u=await value(db.from('replacement_universes').select('id').eq('user_id',s.user_id).eq('hash',hash).single());else if(insert.error)throw databaseError(insert.error);else u=insert.data;}
    await value(db.rpc('save_replacement_strategy',{p_user:s.user_id,p_portfolio:s.portfolio_id,p_universe:u.id,p_revision:s.revision,p_exclusions:s.exclusions}));updated++;status='updated';snapshot=next.asOf;
   }
   message=`IWV benchmark current through source snapshot ${snapshot}. Automatic check runs daily while the local worker is running.`;

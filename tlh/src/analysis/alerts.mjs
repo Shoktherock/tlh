@@ -1,9 +1,10 @@
+import {ReviewError} from '../review-error.mjs';
 import {transactionReconciliation} from './transaction-reconciliation.mjs';
 import {buildValuation,subtract,total} from '../valuation/engine.mjs';
 import {previousWeekday} from '../../server/massive-service.mjs';
 export const defaultAlertPreferences={opportunities:true,dataQuality:true,tracking:true,minLoss:'100'};
 export function validateAlertPreferences(p){
- if(!p||Object.keys(p).sort().join(',')!=='dataQuality,minLoss,opportunities,tracking'||['opportunities','dataQuality','tracking'].some(k=>typeof p[k]!=='boolean')||typeof p.minLoss!=='string'||!/^\d{1,9}(?:\.\d{1,2})?$/.test(p.minLoss))throw Error('Choose alert categories and a USD loss threshold from 0 to 999,999,999.99.');
+ if(!p||Object.keys(p).sort().join(',')!=='dataQuality,minLoss,opportunities,tracking'||['opportunities','dataQuality','tracking'].some(k=>typeof p[k]!=='boolean')||typeof p.minLoss!=='string'||!/^\d{1,9}(?:\.\d{1,2})?$/.test(p.minLoss))throw new ReviewError('Choose alert categories and a USD loss threshold from 0 to 999,999,999.99.');
  return {...p};
 }
 export function alertConditions({state,quotes,tracking,preferences,now,activityRevision,activity}){

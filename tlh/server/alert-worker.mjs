@@ -1,5 +1,6 @@
+import {databaseError} from './database-error.mjs';
 import {alertService} from './alert-service.mjs';
-const value=async p=>{const r=await p;if(r.error)throw Error(r.error.message);return r.data;};
+const value=async p=>{const r=await p;if(r.error)throw databaseError(r.error);return r.data;};
 // Claims are database leases, so concurrent workers cannot pick the same user.
 export async function runScheduledAlert(db,{scan=alertService}={}){
  const [job]=await value(db.rpc('claim_alert_schedule'));

@@ -1,3 +1,4 @@
+import {ReviewError} from '../src/review-error.mjs';
 import {correctionView} from '../src/import/corrections.mjs';
 
 const nyDateFormatter=new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'});
@@ -31,9 +32,9 @@ export async function fetchMassiveDaily(date,{massiveApiKey,fetchImpl=fetch,now=
 }
 
 export async function massiveService(repo,user,body,options={}){
-  if(!['read','daily-refresh'].includes(body.action))throw Error('Choose a daily-price action.');
+  if(!['read','daily-refresh'].includes(body.action))throw new ReviewError('Choose a daily-price action.');
   const now=options.now??(()=>new Date().toISOString()),target=body.date??previousWeekday(now());
-  if(!validDate(target)||target>=nyDate(now())||Date.parse(target)<Date.parse(now())-730*86400000)throw Error('Choose a completed date within the last two years.');
+  if(!validDate(target)||target>=nyDate(now())||Date.parse(target)<Date.parse(now())-730*86400000)throw new ReviewError('Choose a completed date within the last two years.');
   let batch=await repo.dailyRead(body.action==='read'?null:target),error=null;
   if(body.action==='daily-refresh'&&(!batch||Date.parse(now())-Date.parse(batch.fetched_at)>=86400000)){
     if(!options.massiveApiKey)error=failure('unconfigured','Add the server-side Massive API key to fetch daily prices.').error;

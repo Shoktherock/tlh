@@ -1,8 +1,9 @@
+import {ReviewError} from '../review-error.mjs';
 import {csvRows} from './csv.mjs';
 import {parseDecimal,equalDecimals} from '../../../browser-helper/src/decimal.mjs';
 
-const check=(ok,message)=>{if(!ok)throw new Error(`Manual evidence: ${message}`);};
-const at=(label,fn)=>{try{return fn();}catch(error){throw new Error(`${label}: ${error.message}`);}};
+const check=(ok,message)=>{if(!ok)throw new ReviewError(`Manual evidence: ${message}`);};
+const at=(label,fn)=>{try{return fn();}catch(error){throw new ReviewError(`${label}: ${error?.name==='ReviewError'?error.message:'Invalid manual evidence.'}`);}};
 const object=(v,keys)=>{check(v&&typeof v==='object'&&!Array.isArray(v),'expected an object.');check(Object.keys(v).every(k=>keys.includes(k)),'unexpected field; use the current template.');};
 const text=(v,name,max=100)=>{check(typeof v==='string'&&v.trim().length>0&&v.length<=max,`${name} is required (up to ${max} characters).`);return v.trim();};
 const date=v=>{if(v===null)return null;check(typeof v==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v),'dates must be YYYY-MM-DD or unknown.');const d=new Date(`${v}T00:00:00Z`);check(Number.isFinite(+d)&&d.toISOString().slice(0,10)===v,'invalid calendar date.');return v;};
@@ -62,7 +63,7 @@ export function parseManualCsv(text){
     }else if(type==='LOT'){
       check(!description&&!code&&!effective&&!coverage,`row ${i+6}: unexpected fields in lot row.`);
       const group=lots.get(symbol)??[];group.push({acquisition_date:nil(acquired),quantity,total_basis:nil(basis),cost_per_share:nil(cost)});lots.set(symbol,group);
-    }else throw new Error(`Manual evidence: row ${i+6} has an unsupported Type. Use POSITION, SCOPE, or LOT.`);
+    }else throw new ReviewError(`Manual evidence: row ${i+6} has an unsupported Type. Use POSITION, SCOPE, or LOT.`);
   }
   for(const [symbol,scope] of scopes){check(positions.has(symbol),`${symbol}: lot scope needs a position row.`);scope.rows=lots.get(symbol)??[];positions.get(symbol).lots=scope;}
   for(const symbol of lots.keys())check(scopes.has(symbol),`${symbol}: lots need an explicit SCOPE row with coverage.`);

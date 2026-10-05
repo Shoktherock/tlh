@@ -1,9 +1,11 @@
+import {ReviewError} from '../src/review-error.mjs';
+import {databaseError} from './database-error.mjs';
 import {realizedRecovery} from './realized-recovery.mjs';
 import {parseRealized} from '../src/realized/engine.mjs';
 import {canonical} from '../src/analysis/planning-backup.mjs';
 import {hashText} from '../src/activity/engine.mjs';
-const value=async p=>{const r=await p;if(r.error)throw Error(r.error.message);return r.data;};
-const check=(v,m)=>{if(!v)throw Error(m);};
+const value=async p=>{const r=await p;if(r.error)throw databaseError(r.error);return r.data;};
+const check=(v,m)=>{if(!v)throw new ReviewError(m);};
 export async function realizedService(db,user,body){
  if(['realized-backup','realized-restore-preview','realized-restore'].includes(body.action))return realizedRecovery(db,user,body);
  const reports=await value(db.from('realized_reports').select('id,account_id,name,source_hash,fingerprint,document,active,accepted_at,retired_at,retirement_reason,provenance').eq('user_id',user).order('accepted_at',{ascending:false}).limit(101));check(reports.length<=100,'Realized report history exceeds supported limit.');
