@@ -16,10 +16,11 @@ Deno.serve(async(req:Request)=>{
   if(error||!data.user)return reply({error:'Sign in again to continue.'},401);
     const db=createClient(url,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false,autoRefreshToken:false}});
     await enforceRequestQuota(db,data.user.id);
-    const body=await readJsonLimited(req,1048576);
+    const body=await readJsonLimited(req,16384);
     return reply(await quoteService(quoteRepository(db),data.user.id,body,{apiKey:Deno.env.get('TWELVE_DATA_API_KEY'),massiveApiKey:Deno.env.get('MASSIVE_API_KEY'),defaultProvider:'massive'}));
   }catch(error){
     const failure=errorReply(error);
     return new Response(JSON.stringify({error:failure.message}),{status:failure.status,headers:{...headers,...(failure.status===429?{'Retry-After':'60'}:{})}});
   }
 });
+

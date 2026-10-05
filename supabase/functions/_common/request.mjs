@@ -14,7 +14,7 @@ export async function enforceRequestQuota(db,user){
 }
 export function errorReply(error){
  if(error instanceof RequestError)return {status:error.status,message:error.message};
- // Explicit application Errors carry review guidance. Runtime exceptions never expose their text.
+ // Only explicitly marked review guidance crosses the boundary; runtime errors stay private.
  if(error instanceof Error && error.name==='ReviewError')return {status:400,message:error.message};
  return {status:500,message:'Request failed. Reload to check the result before retrying.'};
 }
