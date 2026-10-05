@@ -23,3 +23,61 @@ jobs:
       - run: npm run build:tlh
       - run: npm run build:imports
       - run: npm audit --omit=dev --audit-level=high
+  browser-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      TLH_BROWSER_CHANNEL: chromium
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - run: npm run build:tlh
+      - run: npm run test:browser
+      - run: npm run test:tlh:browser
+      - run: npm run test:accounts:browser
+  supabase-integration:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      TLH_BROWSER_CHANNEL: chromium
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.45.5
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build:imports
+      - name: Start disposable local Supabase
+        run: |
+          mkdir -p test-results
+          supabase start --network-id tlh2-local -x realtime,imgproxy,logflare,vector,supavisor > test-results/supabase-start.log 2>&1
+          npm run supabase:configure
+      - run: npm run build:tlh
+      - name: Serve local Edge Functions
+        run: |
+          supabase functions serve --network-id tlh2-local > test-results/functions.log 2>&1 &
+          for attempt in $(seq 1 60); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:55321/functions/v1/imports || true)
+            if [ "$code" = "401" ]; then exit 0; fi
+            sleep 2
+          done
+          echo 'Local functions did not become ready.'
+          exit 1
+      - run: npm run test:accounts:local
+      - name: Stop disposable services
+        if: always()
+        run: supabase stop --no-backup > /dev/null 2>&1 || true
+      # No uploaded logs, screenshots, traces, exports, or database artifacts.
+      # Only synthetic fixtures and ephemeral local credentials; no repository secrets.
+

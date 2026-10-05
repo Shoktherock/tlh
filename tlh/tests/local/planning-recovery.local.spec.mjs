@@ -8,7 +8,7 @@ import {universeTemplate} from '../../src/analysis/replacements.mjs';
 import {inspectPlanning,planningEnvelope} from '../../src/analysis/planning-backup.mjs';
 const good=async p=>{const r=await p;if(r.error)throw Error(r.error.message);return r.data;};
 test('planning recovery round trip, review, isolation, duplicate and conflict protection without shared cache writes',async({page})=>{
- const config=localSupabase(),raw=JSON.parse(execFileSync('supabase.exe',['status','-o','json'],{encoding:'utf8',stdio:['ignore','pipe','pipe']}));
+ const config=localSupabase(),raw=JSON.parse(execFileSync(process.platform==='win32'?'supabase.exe':'supabase',['status','-o','json'],{encoding:'utf8',stdio:['ignore','pipe','pipe']}));
  const admin=createClient(config.url,raw.SERVICE_ROLE_KEY,{auth:{persistSession:false,autoRefreshToken:false}}),password=`Synthetic-${randomUUID()}-Aa7!`;
  async function owner(label){const user=(await good(admin.auth.admin.createUser({email:`planning-${randomUUID()}@example.test`,password,email_confirm:true}))).user;const client=createClient(config.url,config.key,{auth:{persistSession:false,autoRefreshToken:false}});await good(client.auth.signInWithPassword({email:user.email,password}));const portfolio=await good(client.from('portfolios').insert({user_id:user.id,name:label}).select().single());const account=await good(client.from('accounts').insert({user_id:user.id,portfolio_id:portfolio.id,label:label+' account',broker:'schwab',account_type:'taxable'}).select().single());return {user,client,portfolio,account,store:supabaseStore(client)};}
  const source=await owner('Source planning'),target=await owner('Restored planning');

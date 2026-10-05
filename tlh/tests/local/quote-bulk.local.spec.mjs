@@ -8,7 +8,7 @@ import {sampleFiles} from '../../src/sample.mjs';
 import {readSource} from '../../src/import/sources.mjs';
 const good=async p=>{const r=await p;if(r.error)throw Error(r.error.message);return r.data;};
 test('bulk quote controls preserve existing matches, report exceptions and stop/resume',async({page})=>{
-  const config=localSupabase(),password=`Synthetic-${randomUUID()}-Aa7!`,raw=JSON.parse(execFileSync('supabase.exe',['status','-o','json'],{encoding:'utf8',stdio:['ignore','pipe','pipe']}));
+  const config=localSupabase(),password=`Synthetic-${randomUUID()}-Aa7!`,raw=JSON.parse(execFileSync(process.platform==='win32'?'supabase.exe':'supabase',['status','-o','json'],{encoding:'utf8',stdio:['ignore','pipe','pipe']}));
   const admin=createClient(config.url,raw.SERVICE_ROLE_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
   const user=(await good(admin.auth.admin.createUser({email:`bulk-${randomUUID()}@example.test`,password,email_confirm:true}))).user;
   const client=createClient(config.url,config.key,{auth:{persistSession:false,autoRefreshToken:false}});await good(client.auth.signInWithPassword({email:user.email,password}));

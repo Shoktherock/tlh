@@ -10,7 +10,7 @@ import {readSource} from '../../src/import/sources.mjs';
 import {universeTemplate} from '../../src/analysis/replacements.mjs';
 const good=async p=>{const r=await p;if(r.error)throw Error(r.error.message);return r.data;};
 test('opportunity panel selects fractional lots, saves immutable drafts and preserves filters',async({page})=>{
-  const config=localSupabase(),password=`Synthetic-${randomUUID()}-Aa7!`,raw=JSON.parse(execFileSync('supabase.exe',['status','-o','json'],{encoding:'utf8',stdio:['ignore','pipe','pipe']}));
+  const config=localSupabase(),password=`Synthetic-${randomUUID()}-Aa7!`,raw=JSON.parse(execFileSync(process.platform==='win32'?'supabase.exe':'supabase',['status','-o','json'],{encoding:'utf8',stdio:['ignore','pipe','pipe']}));
   const admin=createClient(config.url,raw.SERVICE_ROLE_KEY,{auth:{persistSession:false,autoRefreshToken:false}}),user=(await good(admin.auth.admin.createUser({email:`replacement-${randomUUID()}@example.test`,password,email_confirm:true}))).user;
   const client=createClient(config.url,config.key,{auth:{persistSession:false,autoRefreshToken:false}});await good(client.auth.signInWithPassword({email:user.email,password}));const store=supabaseStore(client);
   let restoreMarket=async()=>{};
