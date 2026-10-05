@@ -1,7 +1,8 @@
+import {ReviewError} from '../review-error.mjs';
 import {validDate} from '../analysis/inputs.mjs';
 import {inspectSchwabActivity} from './schwab.mjs';
 export const actions=['buy','sell','reinvest','transfer_in','transfer_out','adjustment','other'];
-const check=(ok,message)=>{if(!ok)throw new Error(message);};
+const check=(ok,message)=>{if(!ok)throw new ReviewError(message);};
 const object=v=>v&&typeof v==='object'&&!Array.isArray(v);
 const exact=(v,fields)=>object(v)&&Object.keys(v).every(k=>fields.includes(k));
 const text=(v,label,required=false,max=1000)=>{check(typeof v==='string'&&v.length<=max&&(!required||v.trim().length>=3),`${label}: ${required?'3':'0'}–${max} characters required.`);return v.trim();};
@@ -53,7 +54,7 @@ export function parseActivitySource(source){
     const document=normalizeActivity({format:'tlh-manual-activity',version:1,sourceAccount:r.sourceAccount,reference:r.reference,reason:r.reason,coverage:r.coverage,rows:csv.rows.map(row=>({...row,currency:r.currency}))});
     return {...document,format:'tlh-schwab-activity'};
   }
-  let parsed;try{parsed=JSON.parse(source.text.replace(/^\uFEFF/,''));}catch{throw new Error('Activity JSON is malformed. No rows were accepted.');}
+  let parsed;try{parsed=JSON.parse(source.text.replace(/^\uFEFF/,''));}catch{throw new ReviewError('Activity JSON is malformed. No rows were accepted.');}
   return normalizeActivity(parsed);
 }
 export async function previewActivity(state,accountId,source,decisions={}){

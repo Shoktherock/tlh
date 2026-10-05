@@ -1,3 +1,4 @@
+import {ReviewError} from '../review-error.mjs';
 export const queueKey=r=>JSON.stringify([r.accountId,r.symbol]);
 export async function runQuoteQueue({rows,request,publish,progress,signal,wait=ms=>new Promise(resolve=>{const timer=setTimeout(done,ms);function done(){clearTimeout(timer);signal.removeEventListener('abort',done);resolve();}signal.addEventListener('abort',done,{once:true});}),pace=8000}){
   const issues=[],targets=[...new Map(rows.map(r=>[queueKey(r),r])).values()];
@@ -13,7 +14,7 @@ export async function runQuoteQueue({rows,request,publish,progress,signal,wait=m
       await wait(61000);if(signal.aborted)return null;
       next=await request(body);publish(next);
       const retry=body.action==='automap'?next.automatic:next.items.find(i=>queueKey(i)===queueKey(body.holdings[0]))?.error;
-      if(['rate_limit','busy'].includes(retry?.code))throw Error('Provider allowance is still exhausted. Progress is saved; resume later.');
+      if(['rate_limit','busy'].includes(retry?.code))throw new ReviewError('Provider allowance is still exhausted. Progress is saved; resume later.');
     }
     return next;
   }

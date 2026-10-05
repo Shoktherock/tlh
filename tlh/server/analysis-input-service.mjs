@@ -1,7 +1,8 @@
+import {ReviewError} from '../src/review-error.mjs';
 import {validateInputs,projectInputs,inputChanges,inputWarnings,exportInputsBackup,restoreInputsBackup} from '../src/analysis/inputs.mjs';
-const check=(ok,message)=>{if(!ok)throw new Error(message);};
+const check=(ok,message)=>{if(!ok)throw new ReviewError(message);};
 const uuid=v=>typeof v==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
-const value=async request=>{const {data,error}=await request;if(error)throw new Error(/stale|classification|inventory/.test(error.message)?'This review is stale. Reload the saved inputs and preview again.':/expired/.test(error.message)?'This review expired. Build a new preview.':'Analysis input storage is unavailable or the review cannot be accepted. Reload and try again.');return data;};
+const value=async request=>{const {data,error}=await request;if(error)throw new ReviewError(/stale|classification|inventory/.test(error.message)?'This review is stale. Reload the saved inputs and preview again.':/expired/.test(error.message)?'This review expired. Build a new preview.':'Analysis input storage is unavailable or the review cannot be accepted. Reload and try again.');return data;};
 export async function analysisInputService(db,user,body){
   check(uuid(user),'Sign in to continue.');
   const read=()=>value(db.rpc('read_analysis_inputs',{p_user:user}));
@@ -21,5 +22,5 @@ export async function analysisInputService(db,user,body){
     const receipt=await value(db.rpc('commit_analysis_inputs',{p_user:user,p_prepared:body.preparedId}));
     return {receipt,saved:await read()};
   }
-  throw new Error('Unknown analysis input action.');
+  throw new ReviewError('Unknown analysis input action.');
 }

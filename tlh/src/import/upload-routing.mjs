@@ -1,3 +1,4 @@
+import {ReviewError} from '../review-error.mjs';
 import {readSource} from './sources.mjs';
 import {inspectSchwabActivity} from '../activity/schwab.mjs';
 import {parseRealized} from '../realized/engine.mjs';
@@ -9,8 +10,8 @@ export async function classifyUpload(file){
  await readSource(file);return 'holdings';
 }
 export async function classifyBatch(files){
- if(!files.length)throw Error('Choose at least one file.');
+ if(!files.length)throw new ReviewError('Choose at least one file.');
  const kinds=await Promise.all(files.map(classifyUpload));
- if(new Set(kinds).size!==1||kinds[0]!=='holdings'&&files.length!==1)throw Error('Review transactions and realized reports one file at a time. Positions and lot files can be uploaded together. Nothing was staged.');
+ if(new Set(kinds).size!==1||kinds[0]!=='holdings'&&files.length!==1)throw new ReviewError('Review transactions and realized reports one file at a time. Positions and lot files can be uploaded together. Nothing was staged.');
  return kinds[0];
 }

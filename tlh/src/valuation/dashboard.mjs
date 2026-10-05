@@ -1,3 +1,4 @@
+import {ReviewError} from '../review-error.mjs';
 import {buildValuation,total,subtract} from './engine.mjs';
 import {lotTerm} from '../analysis/candidates.mjs';
 import {validDate} from '../analysis/inputs.mjs';
@@ -30,7 +31,7 @@ function summarize(rows,cash){
   });
 }
 export function buildDashboard({state,prices,asOf,termDate,ordinaryPurchase=false,portfolioId='',accountId=''}){
-  if(!validDate(termDate))throw new Error('Choose a valid holding-period date.');
+  if(!validDate(termDate))throw new ReviewError('Choose a valid holding-period date.');
   const accounts=state.accounts.filter(a=>(!portfolioId||(a.portfolioId??'unassigned')===portfolioId)&&(!accountId||a.id===accountId));
   const ids=new Set(accounts.map(a=>a.id));
   const rows=buildValuation(state,prices,asOf).filter(r=>ids.has(r.accountId)).map(r=>({...r,terms:decompose(r,termDate,ordinaryPurchase)}));

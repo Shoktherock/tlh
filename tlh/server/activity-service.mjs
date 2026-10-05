@@ -1,7 +1,8 @@
+import {ReviewError} from '../src/review-error.mjs';
 import {previewActivity,emptyActivity,activityView,checkActivityLimits,restoreActivity,hashText} from '../src/activity/engine.mjs';
-const check=(ok,message)=>{if(!ok)throw new Error(message);};
+const check=(ok,message)=>{if(!ok)throw new ReviewError(message);};
 const uuid=v=>typeof v==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
-const value=async request=>{const {data,error}=await request;if(error)throw new Error(/stale|inventory/.test(error.message)?'This activity review is stale. Reload and review again.':/expired/.test(error.message)?'This activity review expired. Preview again.':'Activity storage or review is unavailable. Reload to check the result.');return data;};
+const value=async request=>{const {data,error}=await request;if(error)throw new ReviewError(/stale|inventory/.test(error.message)?'This activity review is stale. Reload and review again.':/expired/.test(error.message)?'This activity review expired. Preview again.':'Activity storage or review is unavailable. Reload to check the result.');return data;};
 export async function activityService(db,user,body){
   check(uuid(user),'Sign in to continue.');const read=()=>value(db.rpc('read_activity',{p_user:user}));
   if(body?.action==='read')return read();

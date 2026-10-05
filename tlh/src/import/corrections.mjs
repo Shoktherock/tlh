@@ -1,8 +1,9 @@
+import {ReviewError} from '../review-error.mjs';
 import {parseDecimal,equalDecimals} from '../../../browser-helper/src/decimal.mjs';
 
 export const correctionFields={position:['quantity','total_basis','effective_date'],lots:['effective_date','reported_quantity','reported_basis'],lot:['acquisition_date','quantity','total_basis','cost_per_share'],holding:['confirmedCurrency']};
 const stable=value=>JSON.stringify(value&&typeof value==='object'?Array.isArray(value)?value.map(v=>JSON.parse(stable(v))):Object.fromEntries(Object.keys(value).sort().map(k=>[k,JSON.parse(stable(value[k]))])):value??null);
-const check=(test,message)=>{if(!test)throw new Error(message);};
+const check=(test,message)=>{if(!test)throw new ReviewError(message);};
 export const targetKey=t=>JSON.stringify([t.section,t.field,t.section==='lot'?t.row:null]);
 const eventKey=e=>JSON.stringify([e.accountId,e.symbol,targetKey(e.target)]);
 export function latestCorrections(state){
@@ -71,7 +72,7 @@ export function previewCorrection(state,request,actor){
   check((request.previousId??null)===(previous?.id??null),'The correction changed. Refresh before reviewing it again.');
   const view=correctionView(state),effective=view.holdings[account.id][request.symbol];
   if(request.kind==='revoke')check(previous,'There is no active correction to withdraw.');
-  if(request.kind==='set'&&t.section==='lot'&&previous&&view.correctionStates.find(e=>e.id===previous.id)?.status==='conflict')throw new Error('Lot evidence changed. Withdraw the old correction, then select and review a row from the current lot source.');
+  if(request.kind==='set'&&t.section==='lot'&&previous&&view.correctionStates.find(e=>e.id===previous.id)?.status==='conflict')throw new ReviewError('Lot evidence changed. Withdraw the old correction, then select and review a row from the current lot source.');
   const value=request.kind==='set'?replacement(target,request.value):null;
   const next=structuredClone(effective);
   if(request.kind==='set')write(next,target,value);

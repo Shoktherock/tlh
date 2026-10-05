@@ -1,7 +1,8 @@
+import {ReviewError} from '../review-error.mjs';
 import {csvRows} from '../import/csv.mjs';
 import {validDate} from '../analysis/inputs.mjs';
 const headers=['Date','Action','Symbol','Description','Quantity','Price','Fees & Comm','Amount'];
-const check=(ok,message)=>{if(!ok)throw new Error(message);};
+const check=(ok,message)=>{if(!ok)throw new ReviewError(message);};
 function number(value,label,money=false){
   if(!value)return null;
   const pattern=money?/^-?\$?(?:\d+|[1-9]\d{0,2}(?:,\d{3})+)(?:\.\d+)?$/:/^(?:\d+|[1-9]\d{0,2}(?:,\d{3})+)(?:\.\d+)?$/;

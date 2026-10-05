@@ -1,8 +1,9 @@
+import {ReviewError} from '../review-error.mjs';
 import {csvRows} from '../import/csv.mjs';
 import {validDate} from '../analysis/inputs.mjs';
 import {subtract,total} from '../valuation/engine.mjs';
 export const realizedHeaders=['Symbol','Name','Closed Date','Opened Date','Quantity','Proceeds Per Share','Cost Per Share','Proceeds','Cost Basis (CB)','Gain/Loss ($)','Gain/Loss (%)','Long Term Gain/Loss','Short Term Gain/Loss','Term','Unadjusted Cost Basis','Wash Sale?','Disallowed Loss','Transaction Closed Date','Transaction Cost Basis','Total Transaction Gain/Loss ($)','Total Transaction Gain/Loss (%)','LT Transaction Gain/Loss ($)','LT Transaction Gain/Loss (%)','ST Transaction Gain/Loss ($)','ST Transaction Gain/Loss (%)'];
-const check=(v,m)=>{if(!v)throw Error(m);};
+const check=(v,m)=>{if(!v)throw new ReviewError(m);};
 const date=v=>{const m=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(v),d=m?`${m[3]}-${m[1]}-${m[2]}`:null;check(validDate(d),'Unsupported or invalid realized-report date.');return d;};
 function money(v,required=true){if(!v.trim()){check(!required,'Required realized amount is missing.');return null;}check(/^-?\$?(?:\d+|[1-9]\d{0,2}(?:,\d{3})+)(?:\.\d{1,12})?$/.test(v),'Unsupported realized amount.');return subtract(v.replace(/[$,]/g,''),'0');}
 export function parseRealized(text){

@@ -1,3 +1,4 @@
+import {ReviewError} from '../review-error.mjs';
 import {transactionReconciliation} from './transaction-reconciliation.mjs';
 import {validDate,projectInputs,validateInputs} from './inputs.mjs';
 import {buildValuation,multiply,subtract,total} from '../valuation/engine.mjs';
@@ -8,7 +9,7 @@ export const taxSources=[
   {title:'IRS Publication 550 — Holding Period and Wash Sales',url:'https://www.irs.gov/publications/p550'},
   {title:'IRS Revenue Ruling 2008-5 — IRA acquisitions',url:'https://www.irs.gov/irb/2008-03_IRB'},
 ];
-const check=(ok,message)=>{if(!ok)throw new Error(message);};
+const check=(ok,message)=>{if(!ok)throw new ReviewError(message);};
 const cmp=(a,b)=>{const d=subtract(a,b);return /^-/.test(d)?-1:d==='0'?0:1;};
 const positive=n=>n!==null&&n!==undefined&&cmp(n,'0')>0;
 export function shiftDate(date,days){

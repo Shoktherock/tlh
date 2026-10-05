@@ -1,3 +1,4 @@
+import {ReviewError} from '../src/review-error.mjs';
 import {correctionView} from '../src/import/corrections.mjs';
 import {lookupListing as lookup} from './listing-lookup.mjs';
 import {massiveService} from './massive-service.mjs';
@@ -5,7 +6,7 @@ import {massiveService} from './massive-service.mjs';
 export const QUOTE_TTL_MS=15*60*1000;
 export const exchanges={XNAS:'NASDAQ',XNGS:'NASDAQ Global Select',XNYS:'NYSE',ARCX:'NYSE Arca',BATS:'Cboe BZX',XASE:'NYSE American'};
 const uuid=v=>typeof v==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
-const check=(ok,message)=>{if(!ok)throw new Error(message);};
+const check=(ok,message)=>{if(!ok)throw new ReviewError(message);};
 const identity=h=>JSON.stringify([h.position.security.symbol,h.position.security.broker_security_id??null,h.position.security.exchange??null,h.position.currency??null,h.confirmedCurrency??null]);
 export const quoteKey=m=>`twelve-data:${m.provider_symbol}:${m.mic}:USD`;
 const fresh=(q,now)=>q&&Date.parse(q.fetched_at)<=Date.parse(now)&&Date.parse(now)-Date.parse(q.fetched_at)<QUOTE_TTL_MS;
@@ -112,7 +113,7 @@ export async function quoteService(repo,user,body,options={}){
 // All access is server-side after Auth. Shared cache rows contain no account IDs,
 // quantities, bases or credentials. Private mappings never enter that cache.
 export function quoteRepository(db){
-  const value=async request=>{const {data,error}=await request;if(error)throw new Error('Quote storage is unavailable. Try again.');return data;};
+  const value=async request=>{const {data,error}=await request;if(error)throw new ReviewError('Quote storage is unavailable. Try again.');return data;};
   return {
     snapshot:user=>value(db.rpc('read_import_state',{p_user:user})),
     async mappings(user){const rows=[];for(let start=0;;start+=500){const page=await value(db.from('quote_mappings').select('*').eq('user_id',user).order('account_id').order('symbol').range(start,start+499));rows.push(...page);if(page.length<500)return rows;}},

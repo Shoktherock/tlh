@@ -1,4 +1,5 @@
-const check=(ok,message)=>{if(!ok)throw new Error(message);};
+import {ReviewError} from '../review-error.mjs';
+const check=(ok,message)=>{if(!ok)throw new ReviewError(message);};
 const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
 const keys=(v,allowed)=>object(v)&&Object.keys(v).every(k=>allowed.includes(k));
 export const validDate=v=>typeof v==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v)&&Number.isFinite(Date.parse(`${v}T00:00:00Z`))&&new Date(`${v}T00:00:00Z`).toISOString().slice(0,10)===v;

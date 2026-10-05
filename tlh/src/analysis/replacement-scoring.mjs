@@ -1,3 +1,4 @@
+import {ReviewError} from '../review-error.mjs';
 // Scenario scores only: floating point is used for ranking, never ledger amounts.
 import {sameReplacementIssuer} from './replacement-identity.mjs';
 export const STOCK_WEIGHTS={returns:35,industry:25,size:15,volatility:15,concentration:10};
@@ -24,24 +25,24 @@ export function candidatePool(universe,symbol,limit=20){
   }).slice(0,limit).map(m=>m.symbol);
 }
 export function scoreReplacements(report,{universe,state,daily,metrics={},mode='stock',amount,poolLimit=20}){
-  if(!['stock','index'].includes(mode))throw Error('Choose stock or index scoring.');
-  if(![20,50,150].includes(poolLimit))throw Error('Choose a supported candidate pool.');
-  if(!positive(amount))throw Error('Enter a positive proposed replacement amount in USD.');
+  if(!['stock','index'].includes(mode))throw new ReviewError('Choose stock or index scoring.');
+  if(![20,50,150].includes(poolLimit))throw new ReviewError('Choose a supported candidate pool.');
+  if(!positive(amount))throw new ReviewError('Enter a positive proposed replacement amount in USD.');
   const trade=Number(amount),source=report.source,members=new Map(universe.members.map(m=>[m.symbol,m])),values=new Map();let omitted=0;
-  if(source.type!=='stock')throw Error('Weighted strategies currently compare individual stocks. Fund comparisons require a separate exposure model.');
+  if(source.type!=='stock')throw new ReviewError('Weighted strategies currently compare individual stocks. Fund comparisons require a separate exposure model.');
   for(const a of state.accounts.filter(a=>a.portfolioId===report.portfolioId))for(const [s,h] of Object.entries(state.holdings[a.id]??{})){
     if(!h.active)continue;const p=daily?.prices?.[s]?.price,q=h.position?.quantity,currency=h.position?.currency??h.confirmedCurrency;
     if(!members.has(s)||members.get(s).type!=='stock'||currency!=='USD'||!positive(p)||!positive(q)||h.position?.currency&&h.confirmedCurrency&&h.position.currency!==h.confirmedCurrency){omitted++;continue;}
     values.set(s,(values.get(s)??0)+Number(p)*Number(q));
   }
   const sourceHolding=state.holdings[report.accountId]?.[source.symbol],sourceValue=Number(sourceHolding?.position?.quantity)*Number(daily?.prices?.[source.symbol]?.price);
-  if(!Number.isFinite(sourceValue)||trade>sourceValue)throw Error('Trade amount exceeds the selected holding value or its saved price is unavailable.');
-  const total=[...values.values()].reduce((a,b)=>a+b,0);if(!positive(total))throw Error('No valued USD stock sleeve available.');
-  if(!values.has(source.symbol))throw Error('Source holding is outside the valued USD stock sleeve.');
+  if(!Number.isFinite(sourceValue)||trade>sourceValue)throw new ReviewError('Trade amount exceeds the selected holding value or its saved price is unavailable.');
+  const total=[...values.values()].reduce((a,b)=>a+b,0);if(!positive(total))throw new ReviewError('No valued USD stock sleeve available.');
+  if(!values.has(source.symbol))throw new ReviewError('Source holding is outside the valued USD stock sleeve.');
   const fraction=trade/total,weights=new Map([...values].map(([s,v])=>[s,v/total])),targetTotal=universe.members.reduce((s,m)=>s+(positive(m.benchmarkWeight)?Number(m.benchmarkWeight):0),0);
   const target=new Map(universe.members.map(m=>[m.symbol,targetTotal?Number(m.benchmarkWeight??0)/targetTotal:0]));
   const sectorWeight=new Map(),sectorTarget=new Map();for(const [s,w] of weights){const sector=members.get(s)?.sector??'Unknown';sectorWeight.set(sector,(sectorWeight.get(sector)??0)+w);}for(const m of universe.members)sectorTarget.set(m.sector??'Unknown',(sectorTarget.get(m.sector??'Unknown')??0)+(target.get(m.symbol)??0));
-  if(mode==='index'&&(!targetTotal||universe.members.some(m=>m.type!=='stock'||m.benchmarkWeight==null||!m.sector)))throw Error('Index scoring requires reviewed stock constituent weights and sectors. Import an updated universe.');
+  if(mode==='index'&&(!targetTotal||universe.members.some(m=>m.type!=='stock'||m.benchmarkWeight==null||!m.sector)))throw new ReviewError('Index scoring requires reviewed stock constituent weights and sectors. Import an updated universe.');
   const excludedSymbols=new Set(report.rows.filter(r=>r.excluded.length).map(r=>r.symbol));
   const pool=new Set(candidatePool({...universe,members:universe.members.filter(m=>!excludedSymbols.has(m.symbol))},source.symbol,poolLimit)),sourceMetric=metrics[source.symbol]??{},baseSector=source.sector??'Unknown';
   const squared=(actual,desired)=>[...new Set([...actual.keys(),...desired.keys()])].reduce((s,k)=>s+((actual.get(k)??0)-(desired.get(k)??0))**2,0);

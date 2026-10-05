@@ -1,3 +1,4 @@
+import {ReviewError} from '../review-error.mjs';
 import { assemble, hash } from './sources.mjs';
 import {annotateImportCorrections} from './corrections.mjs';
 import { equalDecimals, sumDecimals } from '../../../browser-helper/src/decimal.mjs';
@@ -36,19 +37,19 @@ function reconcile(position, scope) {
 
 export async function previewImport(state, sources, options, {legacyTiming=false}={}) {
   options={...options,...(!legacyTiming?{timingPolicy:2}:{})};
-  if (state.version !== 1) throw new Error('Unsupported local store version.');
+  if (state.version !== 1) throw new ReviewError('Unsupported local store version.');
   const account = state.accounts.find(a => a.id === options.accountId);
-  if (options.accountId && !account) throw new Error('The target account no longer exists.');
-  if (!account && (!options.accountLabel?.trim() || options.accountLabel.trim().length > 100)) throw new Error('Enter an account label of 1–100 characters.');
-  if (!account && state.accounts.some(a => a.label === options.accountLabel.trim())) throw new Error('Choose the existing account, or give this separate account a distinct label.');
-  if (!['taxable', 'traditional_ira', 'roth_ira', 'other', 'unknown'].includes(options.accountType)) throw new Error('Choose an account type.');
-  if (options.currency !== null && !/^[A-Z]{3}$/.test(options.currency)) throw new Error('Choose a currency or explicitly keep it unknown.');
+  if (options.accountId && !account) throw new ReviewError('The target account no longer exists.');
+  if (!account && (!options.accountLabel?.trim() || options.accountLabel.trim().length > 100)) throw new ReviewError('Enter an account label of 1–100 characters.');
+  if (!account && state.accounts.some(a => a.label === options.accountLabel.trim())) throw new ReviewError('Choose the existing account, or give this separate account a distinct label.');
+  if (!['taxable', 'traditional_ira', 'roth_ira', 'other', 'unknown'].includes(options.accountType)) throw new ReviewError('Choose an account type.');
+  if (options.currency !== null && !/^[A-Z]{3}$/.test(options.currency)) throw new ReviewError('Choose a currency or explicitly keep it unknown.');
   const evidence = assemble(sources, options.sourceAccountRef);
   for (const p of evidence.positions) {
-    if (['__proto__', 'constructor', 'prototype'].includes(p.security.symbol)) throw new Error('Unsupported security key.');
+    if (['__proto__', 'constructor', 'prototype'].includes(p.security.symbol)) throw new ReviewError('Unsupported security key.');
   }
   const currencies = [...evidence.positions, ...evidence.scopes.flatMap(s => s.lots)].map(p => p.currency).filter(Boolean);
-  if (options.currency && currencies.some(c => c !== options.currency)) throw new Error('Confirmed currency conflicts with a reported source currency.');
+  if (options.currency && currencies.some(c => c !== options.currency)) throw new ReviewError('Confirmed currency conflicts with a reported source currency.');
   if (options.completeAccount && evidence.csvSymbols) {
     for (const p of evidence.positions.filter(p => !evidence.csvSymbols.includes(p.security.symbol))) evidence.issues.push({ ...finding('SOURCE_CONFLICT', 'The declared complete Positions CSV omits a security present in the lot snapshot. Review the differing observation times.'), symbol:p.security.symbol });
   }
@@ -59,7 +60,7 @@ export async function previewImport(state, sources, options, {legacyTiming=false
     const symbol = position.security.symbol;
     const scope = scopes.get(symbol) ?? null;
     const old = prior[symbol];
-    if (old && !same(security(old.position.security), security(position.security))) throw new Error(`${symbol}: security identity differs from the accepted holding.`);
+    if (old && !same(security(old.position.security), security(position.security))) throw new ReviewError(`${symbol}: security identity differs from the accepted holding.`);
     const warnings = [];
     let requiresReason = false;
     const next = old ? structuredClone(old) : { position: null, lotScope: null, supplementalScope: null, active: true, warnings: [], lotCoverage: 'missing' };
@@ -126,15 +127,15 @@ export async function previewImport(state, sources, options, {legacyTiming=false
 }
 
 export function acceptPreview(state, preview, decision, { id = () => crypto.randomUUID(), now = () => new Date().toISOString() } = {}) {
-  if (state.revision !== preview.baseRevision) throw new Error('This preview is stale. Refresh it before accepting.');
-  if (!decision.mappingReviewed || !decision.timingReviewed) throw new Error('Review source account mapping and timestamps before accepting.');
+  if (state.revision !== preview.baseRevision) throw new ReviewError('This preview is stale. Refresh it before accepting.');
+  if (!decision.mappingReviewed || !decision.timingReviewed) throw new ReviewError('Review source account mapping and timestamps before accepting.');
   const selected = new Set(decision.symbols);
-  if ([...selected].some(s => !preview.rows.some(r => r.symbol === s))) throw new Error('Selection contains an unknown scope.');
-  if (!selected.size && !(decision.includeCash && preview.cash)) throw new Error('Select at least one holding or cash observation.');
+  if ([...selected].some(s => !preview.rows.some(r => r.symbol === s))) throw new ReviewError('Selection contains an unknown scope.');
+  if (!selected.size && !(decision.includeCash && preview.cash)) throw new ReviewError('Select at least one holding or cash observation.');
   const rows = preview.rows.filter(r => selected.has(r.symbol));
   const relevantConflict = (i, symbol) => i.code === 'CSV_BASIS_TOTAL' || (i.code === 'SOURCE_CONFLICT' && (!i.symbol || i.symbol === symbol));
   const conflicts = rows.some(r => preview.issues.some(i => relevantConflict(i,r.symbol)));
-  if ((rows.some(r => r.requiresReason) || conflicts || (decision.includeCash && preview.cash?.requiresReason)) && !decision.reason?.trim()) throw new Error('Enter a review reason for unresolved differences or uncertain replacement times.');
+  if ((rows.some(r => r.requiresReason) || conflicts || (decision.includeCash && preview.cash?.requiresReason)) && !decision.reason?.trim()) throw new ReviewError('Enter a review reason for unresolved differences or uncertain replacement times.');
   const accountId = preview.options.accountId ?? id();
   const effects = rows.map(r => [r.symbol, holdingEffect(r.next)]).map(JSON.stringify).sort();
   const cashSelected = Boolean(decision.includeCash && preview.cash);
@@ -145,7 +146,7 @@ export function acceptPreview(state, preview, decision, { id = () => crypto.rand
   if (duplicate) return { state, duplicate: true, importId: duplicate.id };
   const next = structuredClone(state);
   if (!preview.options.accountId) next.accounts.push({ id: accountId, label: preview.options.accountLabel.trim(), type: preview.options.accountType, broker: 'schwab' });
-  else if (!next.accounts.some(a => a.id === accountId)) throw new Error('Mapped account is missing.');
+  else if (!next.accounts.some(a => a.id === accountId)) throw new ReviewError('Mapped account is missing.');
   const importId = id();
   next.holdings[accountId] ??= {};
   for (const row of rows) {

@@ -1,8 +1,9 @@
+import {ReviewError} from '../review-error.mjs';
 import { readSource, hash } from './sources.mjs';
 import { emptyState, previewImport, acceptPreview } from './engine.mjs';
 import {previewCorrection,acceptCorrection,correctionView} from './corrections.mjs';
 
-const check = (condition, message) => { if (!condition) throw new Error(message); };
+const check = (condition, message) => { if (!condition) throw new ReviewError(message); };
 const safeKey = value => typeof value === 'string' && value.length > 0 && value.length <= 100 && !['__proto__','constructor','prototype'].includes(value);
 export const canonical = value => JSON.stringify(normalize(value));
 function normalize(value) {

@@ -1,7 +1,8 @@
+import {ReviewError} from '../review-error.mjs';
 import {hashText} from '../activity/engine.mjs';
 import {validateUniverse} from './replacements.mjs';
 export const canonical=v=>JSON.stringify(v&&typeof v==='object'?Array.isArray(v)?v.map(x=>JSON.parse(canonical(x))):Object.fromEntries(Object.keys(v).sort().map(k=>[k,JSON.parse(canonical(v[k]))])):v??null);
-const check=(v,m)=>{if(!v)throw Error(m);};
+const check=(v,m)=>{if(!v)throw new ReviewError(m);};
 const id=v=>typeof v==='string'&&/^[0-9a-f-]{36}$/i.test(v);
 const hash=v=>typeof v==='string'&&/^[0-9a-f]{64}$/.test(v);
 export async function planningEnvelope(data){return {format:'tlh-planning-backup',version:1,data,checksum:await hashText(canonical(data))};}

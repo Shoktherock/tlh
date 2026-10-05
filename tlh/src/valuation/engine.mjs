@@ -1,7 +1,8 @@
+import {ReviewError} from '../review-error.mjs';
 import {correctionView} from '../import/corrections.mjs';
 import {reconciliationIssues} from '../import/reconciliation.mjs';
 
-const check=(v,message)=>{if(!v)throw new Error(message);};
+const check=(v,message)=>{if(!v)throw new ReviewError(message);};
 function parts(value){
   check(typeof value==='string'&&/^-?\d+(?:\.\d+)?$/.test(value),'Invalid exact decimal.');
   const [whole,fraction='']=value.split('.');return {n:BigInt(whole+fraction),scale:fraction.length};
