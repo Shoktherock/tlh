@@ -1,3 +1,4 @@
+import {dataLifecycle} from './data-lifecycle.mjs';
 import {ReviewError} from '../src/review-error.mjs';
 import { readSource, decodeSourceBytes, hash } from '../src/import/sources.mjs';
 import { previewImport, acceptPreview } from '../src/import/engine.mjs';
@@ -23,8 +24,9 @@ async function uploadedText(db,record){
   return text;
 }
 
-export async function importService(db,user,body){
+export async function importService(db,user,body,context={}){
   requireValue(uuid(user),'Sign in to continue.');
+  if(['data-preview','data-delete','data-reopen'].includes(body?.action))return dataLifecycle(db,user,body,context);
   switch(body?.action){
     case 'read': return {state:await snapshot(db,user)};
     case 'prepare-correction': {
