@@ -16,7 +16,10 @@ async function handle(req:Request){
     const db=createClient(url,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false,autoRefreshToken:false}});
     await enforceRequestQuota(db,data.user.id);
     const body=await readJsonLimited(req,1048576);
-    const result=await importService(db,data.user.id,body);
+    // Token identity was verified by getUser above; bind confirmation to this session's password proof.
+    const claims=JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+    const passwordVerifiedAt=Math.max(0,...(Array.isArray(claims.amr)?claims.amr:[]).filter((item:any)=>item.method==='password'&&Number.isFinite(item.timestamp)).map((item:any)=>item.timestamp*1000));
+    const result=await importService(db,data.user.id,body,{lastSignIn:data.user.last_sign_in_at,passwordVerifiedAt});
     return new Response(JSON.stringify(result),{headers});
   }catch(error){
     const failure=errorReply(error);

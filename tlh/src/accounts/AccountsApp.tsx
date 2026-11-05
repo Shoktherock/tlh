@@ -1,3 +1,4 @@
+import DataPrivacy from './DataPrivacy';
 import React, { useEffect, useMemo, useState } from 'react';
 import type { Session, SupabaseClient } from '@supabase/supabase-js';
 import { Alert, Button, MenuItem, TextField } from '@mui/material';
@@ -107,6 +108,7 @@ function AccountWorkspace({client, userId, email}: {client:SupabaseClient;userId
         <TextField label="Last four digits (optional)" value={suffix} disabled={busy} onChange={e=>setSuffix(e.target.value)} slotProps={{htmlInput:{maxLength:4,pattern:'[0-9]{4}',inputMode:'numeric'}}} helperText="A display hint, never an automatic account match."/>
       </div><div className="section-end">{editing ? <Button disabled={busy} onClick={resetAccount}>Cancel edit</Button> : <span>Use a label you can recognize during import.</span>}<Button variant="contained" type="submit" disabled={busy || !label.trim() || !broker.trim()}>{editing ? 'Save account' : 'Add account'}</Button></div></form>
     </section>}
+    <DataPrivacy client={client} email={email} onDeleted={()=>{setAccounts([]);setPortfolios([]);setPortfolioId('');resetAccount();}}/>
     {!busy && ready && !portfolios.length && <p>Create your first portfolio to add brokerage accounts.</p>}
   </>;
 }
